@@ -67,3 +67,15 @@ class APIViewTests(TestCase):
         self.assertTrue(data["success"])
         self.assertIn("daily_logs", data)
         self.assertIn("waypoints", data)
+
+    def test_root_redirects_to_docs(self):
+        response = self.client.get('/')
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, '/api/docs/')
+
+    def test_openapi_schema_contains_endpoints(self):
+        response = self.client.get('/api/schema/')
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode('utf-8')
+        self.assertIn('/api/health/', content)
+        self.assertIn('/api/plan-trip/', content)
