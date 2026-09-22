@@ -25,7 +25,7 @@ export default function App() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('http://localhost:8000/api/plan-trip/', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/plan-trip/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
