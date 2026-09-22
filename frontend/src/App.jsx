@@ -9,8 +9,11 @@ import {
   MapPin,
   ArrowLeft,
   Clock,
-  Sparkles,
   Layers,
+  ShieldCheck,
+  Fuel,
+  Bed,
+  Compass,
 } from 'lucide-react';
 
 const WP_COLORS = {
@@ -29,10 +32,10 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [formInputs, setFormInputs] = useState({
-    current_location: 'Chicago, IL',
-    pickup_location: 'Indianapolis, IN',
-    dropoff_location: 'Dallas, TX',
-    current_cycle_used: 15.0,
+    current_location: '',
+    pickup_location: '',
+    dropoff_location: '',
+    current_cycle_used: 0,
   });
 
   const handlePlanTrip = async (formData) => {
@@ -68,19 +71,18 @@ export default function App() {
       {/* ── Landing Page View ── */}
       {page === 'landing' && (
         <div className="landing-page-view">
+          
+          {/* Full-width background with truck visible in the upper area */}
+          <div className="landing-bg-banner">
+            <div className="landing-bg-overlay" />
+          </div>
+
           <Navbar onHomeClick={() => setPage('landing')} />
 
           <main className="landing-content">
-            <div className="hero-text-block">
-              <div className="hero-pill">
-                <Sparkles size={13} style={{ color: 'var(--accent-blue)' }} />
-                <span>FMCSA Property-Carrying HOS Compliance Engine</span>
-              </div>
-              <h1 className="hero-title">Commercial Route &amp; ELD Trip Planner</h1>
-              <p className="hero-subtitle">
-                Enter your trip parameters below to generate HOS-compliant route stops, rest intervals, fuel stops, and daily 24-hour RODS log sheets.
-              </p>
-            </div>
+            
+            {/* Top spacing area so the truck in the background is fully shown */}
+            <div className="hero-visible-space" />
 
             {/* Error Banner if any */}
             {error && (
@@ -90,12 +92,48 @@ export default function App() {
               </div>
             )}
 
-            {/* Trip Parameters Widget (Card Style like reference) */}
+            {/* Shifted Trip Parameters Search Card */}
             <TripForm
               initialValues={formInputs}
               onSubmit={handlePlanTrip}
               loading={loading}
             />
+
+            {/* Minimalist HOS Rules Footer Strip */}
+            <div className="landing-rules-strip">
+              <div className="rule-item">
+                <Compass size={14} className="rule-icon" />
+                <div className="rule-content">
+                  <span className="rule-title">11-Hour Driving</span>
+                  <span className="rule-desc">Max driving in 14h window</span>
+                </div>
+              </div>
+
+              <div className="rule-item">
+                <Bed size={14} className="rule-icon" />
+                <div className="rule-content">
+                  <span className="rule-title">10-Hour Rest</span>
+                  <span className="rule-desc">Mandatory sleeper berth</span>
+                </div>
+              </div>
+
+              <div className="rule-item">
+                <Fuel size={14} className="rule-icon" />
+                <div className="rule-content">
+                  <span className="rule-title">1,000-Mi Fueling</span>
+                  <span className="rule-desc">Automatic fuel intervals</span>
+                </div>
+              </div>
+
+              <div className="rule-item">
+                <ShieldCheck size={14} className="rule-icon" />
+                <div className="rule-content">
+                  <span className="rule-title">70h / 8-Day Cycle</span>
+                  <span className="rule-desc">Recap &amp; FMCSA RODS</span>
+                </div>
+              </div>
+            </div>
+
           </main>
         </div>
       )}
@@ -113,7 +151,7 @@ export default function App() {
                 onClick={() => setPage('landing')}
                 title="Return to search inputs"
               >
-                <ArrowLeft size={16} />
+                <ArrowLeft size={15} />
                 <span>Edit Trip Parameters</span>
               </button>
 
@@ -145,11 +183,11 @@ export default function App() {
             {/* ── Row: Side-by-Side (Stops & Itinerary on Left | Map on Right) ── */}
             <div className="side-by-side-row">
               
-              {/* Left Side: Stops and Itinerary (Compact, small-medium size) */}
+              {/* Left Side: Stops and Itinerary */}
               <div className="itinerary-panel">
                 <div className="panel-header-bar">
                   <div className="panel-title">
-                    <Layers size={15} style={{ color: 'var(--ink-2)' }} />
+                    <Layers size={14} style={{ color: 'var(--ink-2)' }} />
                     <span>Stops &amp; Itinerary</span>
                   </div>
                   <span className="panel-counter-badge">
@@ -201,11 +239,11 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Right Side: Map (Small-medium size, matches height of itinerary) */}
+              {/* Right Side: Map */}
               <div className="map-panel">
                 <div className="panel-header-bar">
                   <div className="panel-title">
-                    <MapPin size={15} style={{ color: 'var(--ink-2)' }} />
+                    <MapPin size={14} style={{ color: 'var(--ink-2)' }} />
                     <span>Route Map</span>
                   </div>
                   <span style={{ fontSize: '0.74rem', color: 'var(--ink-3)' }}>

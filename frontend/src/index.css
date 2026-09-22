@@ -1,4 +1,4 @@
-/* ─── Eventra-inspired Commercial Logistics Design System ─────────────────── */
+/* ─── Eventra / Minimalist Commercial Logistics Design System ─────────────── */
 
 :root {
   --bg:            #ffffff;
@@ -23,12 +23,12 @@
   --mono:          'JetBrains Mono', monospace;
 
   --radius-sm:     8px;
-  --radius-md:     14px;
-  --radius-lg:     20px;
+  --radius-md:     12px;
+  --radius-lg:     16px;
 
   --shadow-sm:     0 1px 3px rgba(0,0,0,0.05);
-  --shadow-md:     0 4px 16px rgba(15,23,42,0.06);
-  --shadow-lg:     0 12px 36px rgba(15,23,42,0.08);
+  --shadow-md:     0 4px 16px rgba(15,23,42,0.05);
+  --shadow-lg:     0 14px 40px rgba(15,23,42,0.09);
 }
 
 /* ─── Reset ─────────────────────────────────────────────────────────────── */
@@ -44,29 +44,31 @@ body {
 }
 
 /* ─── Scrollbar ──────────────────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-dark); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--ink-4); }
 
-/* ─── Navbar ─────────────────────────────────────────────────────────────── */
+/* ─── Navbar (HOS Trip Planner in Center with Subtle Gradient) ──────────── */
 .navbar {
   display: flex;
   align-items: center;
+  justify-content: center;
   padding: 0 32px;
-  height: 56px;
-  border-bottom: 1px solid var(--border);
-  background: #ffffff;
+  height: 54px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(241, 245, 249, 0.9) 100%);
+  backdrop-filter: blur(10px);
   position: sticky;
   top: 0;
   z-index: 100;
 }
 .navbar-brand {
-  font-size: 1rem;
+  font-size: 0.96rem;
   font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--ink);
   user-select: none;
+  text-align: center;
 }
 
 /* ─── Landing Page View ──────────────────────────────────────────────────── */
@@ -74,73 +76,70 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: radial-gradient(circle at 50% 0%, #ffffff 0%, #f1f5f9 100%);
+  background: #f8fafc;
+  position: relative;
+}
+
+/* Full-width background banner showcasing the truck at top-right */
+.landing-bg-banner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 380px;
+  background-image: url('/hero-banner.jpg');
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: right 6%;
+  z-index: 0;
+  pointer-events: none;
+}
+.landing-bg-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.0) 0%,
+    rgba(255, 255, 255, 0.25) 45%,
+    rgba(248, 250, 252, 0.88) 80%,
+    #f8fafc 100%
+  );
+}
+
+/* Space above the card that leaves the truck 100% visible */
+.hero-visible-space {
+  height: 145px;
+  width: 100%;
 }
 
 .landing-content {
-  max-width: 1120px;
+  flex: 1;
+  max-width: 1040px;
   width: 100%;
   margin: 0 auto;
-  padding: 48px 24px 80px;
+  padding: 0 24px 60px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
+  z-index: 1;
+  gap: 22px;
 }
 
-.hero-text-block {
-  text-align: center;
-  max-width: 780px;
-  margin-bottom: 36px;
-}
-.hero-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--accent-blue-bg);
-  border: 1px solid #bfdbfe;
-  color: var(--accent-blue);
-  font-size: 0.76rem;
-  font-weight: 700;
-  padding: 4px 12px;
-  border-radius: 20px;
-  margin-bottom: 16px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-.hero-title {
-  font-size: 2.3rem;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  color: var(--ink);
-  line-height: 1.15;
-  margin-bottom: 12px;
-}
-.hero-subtitle {
-  font-size: 0.98rem;
-  color: var(--ink-3);
-  line-height: 1.55;
-  max-width: 660px;
-  margin: 0 auto;
-}
-
-/* ─── Trip Parameters Widget (Card Style like reference) ─────────────────── */
+/* ─── Trip Parameters Widget Box ─────────────────────────────────────────── */
 .trip-widget-container {
   width: 100%;
-  max-width: 1040px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
 }
 
 .trip-search-card {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid rgba(226, 232, 240, 0.95);
   border-radius: var(--radius-lg);
-  padding: 24px;
+  padding: 22px 24px;
   box-shadow: var(--shadow-lg);
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
 }
 
 .trip-fields-row {
@@ -150,29 +149,36 @@ body {
   flex-wrap: wrap;
 }
 
-/* Location input box container */
+/* Location input container */
+.search-field-container {
+  position: relative;
+  width: 100%;
+}
+
+/* Location input box */
 .search-field-box {
-  background: #f8fafc;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 12px;
+  background: #ffffff;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
   padding: 10px 14px;
   display: flex;
   align-items: center;
   gap: 10px;
-  transition: all 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
   cursor: text;
 }
 .search-field-box:focus-within,
+.search-field-box.is-focused,
 .search-field-box:hover {
-  border-color: var(--accent-blue);
-  background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+  border-color: var(--ink);
+  box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.06);
 }
 .search-field-icon {
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--ink-3);
 }
 .search-field-content {
   flex: 1;
@@ -181,10 +187,10 @@ body {
   flex-direction: column;
 }
 .search-field-label {
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.07em;
   color: var(--ink-3);
   margin-bottom: 2px;
   user-select: none;
@@ -193,7 +199,7 @@ body {
   border: none;
   background: transparent;
   outline: none;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 600;
   color: var(--ink);
   font-family: var(--font);
@@ -204,26 +210,105 @@ body {
   color: var(--ink-4);
   font-weight: 400;
 }
+.search-field-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.input-clear-btn {
+  background: transparent;
+  border: none;
+  color: var(--ink-3);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s ease;
+}
+.input-clear-btn:hover {
+  background: var(--bg-hover);
+  color: var(--ink);
+}
+.input-spinner {
+  width: 13px;
+  height: 13px;
+  border: 2px solid var(--border);
+  border-top-color: var(--ink);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+/* Suggestions Dropdown */
+.suggestions-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12);
+  z-index: 1000;
+  max-height: 240px;
+  overflow-y: auto;
+}
+.suggestion-item {
+  padding: 9px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--bg-subtle);
+  transition: background 0.1s ease;
+}
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+.suggestion-item:hover,
+.suggestion-item.highlighted {
+  background: var(--bg-hover);
+}
+.suggestion-icon {
+  color: var(--ink-3);
+  flex-shrink: 0;
+}
+.suggestion-text {
+  flex: 1;
+  min-width: 0;
+}
+.suggestion-main {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.suggestion-sub {
+  font-size: 0.72rem;
+  color: var(--ink-3);
+  margin-top: 1px;
+}
 
 /* Swap button */
 .swap-btn {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  border: 1.5px solid #e2e8f0;
+  border: 1px solid var(--border);
   background: #ffffff;
-  color: var(--accent-blue);
+  color: var(--ink-2);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
-  transition: all 0.15s ease;
+  transition: all 0.12s ease;
   box-shadow: var(--shadow-sm);
 }
 .swap-btn:hover {
-  background: var(--accent-blue-bg);
-  border-color: var(--accent-blue);
+  background: var(--bg-hover);
+  border-color: var(--ink);
+  color: var(--ink);
   transform: rotate(180deg);
 }
 
@@ -236,10 +321,10 @@ body {
 }
 
 .cycle-selector-box {
-  background: #f8fafc;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 12px 18px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 16px;
 }
 .cycle-header {
   display: flex;
@@ -248,15 +333,15 @@ body {
 }
 .cycle-val-display {
   font-family: var(--mono);
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   color: var(--ink);
 }
 .cycle-track {
-  height: 6px;
-  background: #e2e8f0;
-  border-radius: 3px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
   overflow: hidden;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
   position: relative;
 }
 .cycle-fill {
@@ -265,116 +350,124 @@ body {
 }
 .cycle-slider {
   width: 100%;
-  accent-color: var(--accent-blue);
+  accent-color: var(--ink);
   cursor: pointer;
   margin: 0;
 }
 
-/* Big Search CTA Button */
+/* Calculate CTA Button (Sleek Minimalist Carbon Finish) */
 .search-cta-btn {
-  background: var(--accent-blue);
+  background: var(--ink);
   color: #ffffff;
   border: none;
-  border-radius: 30px;
-  padding: 16px 28px;
-  font-size: 0.96rem;
-  font-weight: 700;
+  border-radius: var(--radius-sm);
+  padding: 0 22px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   font-family: var(--font);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  box-shadow: 0 4px 14px rgba(37,99,235,0.35);
+  gap: 8px;
   transition: all 0.15s ease;
   white-space: nowrap;
-  height: 56px;
+  height: 50px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.15);
 }
 .search-cta-btn:hover {
-  background: #1d4ed8;
-  box-shadow: 0 6px 20px rgba(37,99,235,0.45);
+  background: #1e293b;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
   transform: translateY(-1px);
 }
+.search-cta-btn:active {
+  transform: translateY(0);
+}
 .search-cta-btn:disabled {
-  opacity: 0.6;
+  opacity: 0.45;
   cursor: not-allowed;
   transform: none;
 }
 
-/* Presets Bar */
-.presets-bar {
+/* Compact Preset Strip */
+.presets-compact-strip {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding-top: 12px;
+  gap: 8px;
+  padding-top: 10px;
   border-top: 1px solid #f1f5f9;
   flex-wrap: wrap;
 }
-.presets-title {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 0.74rem;
+.presets-compact-label {
+  font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--ink-3);
-}
-.presets-list {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
+}
+.presets-compact-items {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   flex-wrap: wrap;
 }
-.preset-chip {
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  padding: 5px 11px;
-  border-radius: 16px;
-  font-size: 0.78rem;
-  font-weight: 600;
+.preset-link-btn {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 3px 9px;
+  font-size: 0.75rem;
+  font-weight: 500;
   color: var(--ink-2);
   cursor: pointer;
   font-family: var(--font);
-  transition: all 0.12s;
+  transition: all 0.12s ease;
 }
-.preset-chip:hover {
+.preset-link-btn:hover {
   background: #ffffff;
   border-color: var(--accent-blue);
   color: var(--accent-blue);
-  box-shadow: var(--shadow-sm);
 }
 
-/* Feature cards */
-.feature-cards-grid {
+/* ─── Minimalist HOS Rules Footer Strip ─────────────────────────────────── */
+.landing-rules-strip {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  width: 100%;
 }
-.feature-card {
+.rule-item {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: 10px;
   box-shadow: var(--shadow-sm);
 }
-.feature-icon {
-  color: var(--accent-green);
+.rule-icon {
+  color: var(--accent-blue);
   flex-shrink: 0;
   margin-top: 2px;
 }
-.feature-title {
-  font-size: 0.85rem;
+.rule-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.rule-title {
+  font-size: 0.78rem;
   font-weight: 700;
   color: var(--ink);
-  margin-bottom: 2px;
 }
-.feature-desc {
-  font-size: 0.76rem;
+.rule-desc {
+  font-size: 0.7rem;
   color: var(--ink-3);
-  line-height: 1.4;
+  line-height: 1.3;
 }
 
 /* ─── Results Page View ──────────────────────────────────────────────────── */
@@ -402,7 +495,7 @@ body {
 
 .btn-back {
   background: #ffffff;
-  border: 1.5px solid var(--border);
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 6px 14px;
   font-size: 0.82rem;
@@ -417,7 +510,7 @@ body {
 }
 .btn-back:hover {
   background: var(--bg-hover);
-  border-color: var(--border-dark);
+  border-color: var(--ink);
 }
 
 .route-breadcrumb-pill {
@@ -443,7 +536,7 @@ body {
   margin-left: 4px;
 }
 
-/* ─── Stats Bar ──────────────────────────────────────────────────────────── */
+/* ─── Stats Bar ──────────────────────────────────────────────────── */
 .stats-bar {
   display: flex;
   border-bottom: 1px solid var(--border);
@@ -453,7 +546,7 @@ body {
 }
 .stat-cell {
   flex: 1;
-  min-width: 140px;
+  min-width: 130px;
   padding: 12px 20px;
   border-right: 1px solid var(--border);
   display: flex;
@@ -462,7 +555,7 @@ body {
 }
 .stat-cell:last-child { border-right: none; }
 .stat-label {
-  font-size: 0.66rem;
+  font-size: 0.65rem;
   font-weight: 700;
   color: var(--ink-3);
   text-transform: uppercase;
@@ -472,14 +565,14 @@ body {
   gap: 5px;
 }
 .stat-value {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 800;
   color: var(--ink);
   letter-spacing: -0.02em;
   line-height: 1.15;
 }
 .stat-sub {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: var(--ink-4);
 }
 
@@ -499,7 +592,7 @@ body {
   display: grid;
   grid-template-columns: 420px 1fr;
   gap: 20px;
-  height: 390px; /* Small-medium compact height */
+  height: 390px;
 }
 
 .itinerary-panel,
@@ -524,7 +617,7 @@ body {
   flex-shrink: 0;
 }
 .panel-title {
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
@@ -565,20 +658,19 @@ body {
 .itinerary-card:hover {
   background: #ffffff;
   border-color: var(--border-dark);
-  box-shadow: var(--shadow-sm);
 }
 .itinerary-marker-dot {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   color: #ffffff;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  margin-top: 2px;
+  margin-top: 1px;
 }
 .itinerary-card-body {
   flex: 1;
@@ -592,12 +684,12 @@ body {
   margin-bottom: 2px;
 }
 .itinerary-card-title {
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   font-weight: 700;
   color: var(--ink);
 }
 .itinerary-card-type-badge {
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 700;
   padding: 1px 7px;
   border-radius: 12px;
@@ -607,7 +699,7 @@ body {
   white-space: nowrap;
 }
 .itinerary-card-location {
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   color: var(--ink-3);
   display: flex;
   align-items: center;
@@ -615,7 +707,7 @@ body {
   margin-bottom: 3px;
 }
 .itinerary-card-desc {
-  font-size: 0.76rem;
+  font-size: 0.74rem;
   color: var(--ink-2);
   line-height: 1.35;
 }
@@ -739,6 +831,9 @@ body {
 
 /* ─── Responsive ─────────────────────────────────────────────────────────── */
 @media (max-width: 960px) {
+  .hero-visible-space {
+    height: 80px;
+  }
   .side-by-side-row {
     grid-template-columns: 1fr;
     height: auto;
@@ -760,8 +855,8 @@ body {
   .trip-secondary-row {
     grid-template-columns: 1fr;
   }
-  .feature-cards-grid {
-    grid-template-columns: 1fr;
+  .landing-rules-strip {
+    grid-template-columns: 1fr 1fr;
   }
   .page-results-content {
     padding: 16px;
@@ -769,5 +864,10 @@ body {
   }
   .stats-bar {
     padding: 0 16px;
+  }
+}
+@media (max-width: 580px) {
+  .landing-rules-strip {
+    grid-template-columns: 1fr;
   }
 }
