@@ -453,8 +453,19 @@ class HOSEngine:
             running_cycle_on_duty += on_duty_today
             avail_tomorrow = max(0.0, round(70.0 - running_cycle_on_duty, 2))
 
-            from_loc = origin_loc["name"] if day_num == 1 else "En Route"
-            to_loc = dest_loc["name"] if day_num == total_days else "En Route"
+            # Derive from/to location from the event timeline
+            # from_loc = location of the last event that was active at the START of this day
+            # to_loc   = location of the last event that was active at the END of this day
+            from_loc = origin_loc["name"]
+            to_loc = dest_loc["name"]
+            for ev in events:
+                if ev["start_minute"] <= day_start_min and ev["end_minute"] > day_start_min:
+                    from_loc = ev["location"]
+                elif ev["start_minute"] < day_start_min:
+                    from_loc = ev["location"]
+            to_loc_candidates = [ev["location"] for ev in events if ev["start_minute"] < day_end_min]
+            if to_loc_candidates:
+                to_loc = to_loc_candidates[-1]
 
             daily_logs.append({
                 "day_number": day_num,

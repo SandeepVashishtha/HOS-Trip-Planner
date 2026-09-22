@@ -1,104 +1,120 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Polyline, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 
-// Create custom SVG markers
-const createCustomIcon = (color, emoji) => {
-  return L.divIcon({
+const createCustomIcon = (color, emoji) =>
+  L.divIcon({
     className: 'custom-leaflet-marker',
-    html: `
-      <div style="
-        background-color: ${color};
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 2px solid white;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-        font-size: 16px;
-      ">${emoji}</div>
-    `,
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
-    popupAnchor: [0, -18]
+    html: `<div style="background:${color};width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);font-size:13px;">${emoji}</div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+    popupAnchor: [0, -16],
   });
-};
 
 const icons = {
-  START: createCustomIcon('#10B981', '🟢'),
-  PICKUP: createCustomIcon('#3B82F6', '📦'),
-  DROPOFF: createCustomIcon('#EF4444', '🏁'),
-  FUEL: createCustomIcon('#F59E0B', '⛽'),
-  REST_30M: createCustomIcon('#14B8A6', '☕'),
-  REST_10H: createCustomIcon('#8B5CF6', '🛌'),
-  RESTART: createCustomIcon('#F97316', '⚠️')
+  START:    createCustomIcon('#111111', '🟢'),
+  PICKUP:   createCustomIcon('#2563EB', '📦'),
+  DROPOFF:  createCustomIcon('#dc2626', '🏁'),
+  FUEL:     createCustomIcon('#d97706', '⛽'),
+  REST_30M: createCustomIcon('#0891b2', '☕'),
+  REST_10H: createCustomIcon('#7c3aed', '🛌'),
+  RESTART:  createCustomIcon('#ea580c', '⚠️'),
 };
 
 function AutoFitBounds({ coordinates, waypoints }) {
   const map = useMap();
-
   useEffect(() => {
-    if (coordinates && coordinates.length > 0) {
-      const bounds = L.latLngBounds(coordinates);
-      map.fitBounds(bounds, { padding: [40, 40] });
-    } else if (waypoints && waypoints.length > 0) {
-      const pts = waypoints.map(w => [w.lat, w.lng]);
-      const bounds = L.latLngBounds(pts);
-      map.fitBounds(bounds, { padding: [40, 40] });
+    map.invalidateSize();
+    if (coordinates?.length > 0) {
+      map.fitBounds(L.latLngBounds(coordinates), { padding: [30, 30] });
+    } else if (waypoints?.length > 0) {
+      map.fitBounds(L.latLngBounds(waypoints.map(w => [w.lat, w.lng])), { padding: [30, 30] });
     }
   }, [coordinates, waypoints, map]);
+  return null;
+}
 
+// Enables scroll zoom only when map is "activated" by a click
+function ScrollZoomController({ active }) {
+  const map = useMap();
+  useEffect(() => {
+    if (active) map.scrollWheelZoom.enable();
+    else         map.scrollWheelZoom.disable();
+  }, [active, map]);
   return null;
 }
 
 export default function RouteMap({ coordinates, waypoints, locations }) {
   const center = locations?.current ? [locations.current.lat, locations.current.lng] : [39.8283, -98.5795];
+  const [scrollZoomActive, setScrollZoomActive] = useState(false);
 
   return (
-    <div className="map-container">
-      <MapContainer center={center} zoom={5} scrollWheelZoom={true}>
+    <div
+      style={{ height: '100%', width: '100%', position: 'relative' }}
+      onMouseLeave={() => setScrollZoomActive(false)}
+    >
+      <MapContainer
+        center={center}
+        zoom={5}
+        scrollWheelZoom={false}
+        style={{ height: '100%', width: '100%' }}
+      >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          url={`https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${import.meta.env.VITE_CARTO_API_KEY}`}
         />
 
         <AutoFitBounds coordinates={coordinates} waypoints={waypoints} />
+        <ScrollZoomController active={scrollZoomActive} />
 
-        {/* Route Polyline */}
-        {coordinates && coordinates.length > 0 && (
+        {coordinates?.length > 0 && (
           <Polyline
             positions={coordinates}
-            pathOptions={{ color: '#0284C7', weight: 5, opacity: 0.85, lineDashArray: '0' }}
+            pathOptions={{ color: '#2563eb', weight: 4, opacity: 0.85 }}
           />
         )}
 
-        {/* Waypoints */}
-        {waypoints && waypoints.map((wp, idx) => {
-          const icon = icons[wp.type] || icons.START;
-          return (
-            <Marker key={idx} position={[wp.lat, wp.lng]} icon={icon}>
-              <Popup>
-                <div style={{ padding: 4, fontFamily: 'sans-serif' }}>
-                  <div style={{ fontWeight: 'bold', fontSize: '0.95rem', color: '#0F172A', marginBottom: 2 }}>
-                    {wp.name}
-                  </div>
-                  <div style={{ fontSize: '0.85rem', color: '#475569' }}>
-                    {wp.location}
-                  </div>
-                  <div style={{ fontSize: '0.8rem', color: '#0284C7', marginTop: 4, fontWeight: 600 }}>
-                    Duration: {wp.duration}
-                  </div>
-                  <div style={{ fontSize: '0.78rem', color: '#64748B', marginTop: 2 }}>
-                    {wp.description}
-                  </div>
-                </div>
-              </Popup>
-            </Marker>
-          );
-        })}
+        {waypoints?.map((wp, idx) => (
+          <Marker key={idx} position={[wp.lat, wp.lng]} icon={icons[wp.type] || icons.START}>
+            <Popup>
+              <div style={{ fontFamily: 'var(--font)', padding: 2 }}>
+                <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#111', marginBottom: 2 }}>{wp.name}</div>
+                <div style={{ fontSize: '0.8rem', color: '#555' }}>{wp.location}</div>
+                <div style={{ fontSize: '0.76rem', color: '#888', marginTop: 4 }}>{wp.description}</div>
+                {wp.duration && <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#111', marginTop: 3 }}>{wp.duration}</div>}
+              </div>
+            </Popup>
+          </Marker>
+        ))}
       </MapContainer>
+
+      {/* Click-to-activate overlay */}
+      {!scrollZoomActive && (
+        <div
+          onClick={() => setScrollZoomActive(true)}
+          style={{
+            position: 'absolute', inset: 0, zIndex: 400,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'transparent',
+            cursor: 'pointer',
+          }}
+        >
+          <div
+            style={{
+              background: 'rgba(15,23,42,0.75)', color: '#fff',
+              fontSize: '0.75rem', fontWeight: 500,
+              padding: '5px 12px', borderRadius: 20,
+              opacity: 0,
+              transition: 'opacity 0.2s',
+              pointerEvents: 'none',
+              userSelect: 'none',
+            }}
+            className="map-hint"
+          >
+            Click to enable scroll zoom
+          </div>
+        </div>
+      )}
     </div>
   );
 }

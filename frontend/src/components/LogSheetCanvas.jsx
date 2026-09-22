@@ -298,23 +298,32 @@ export default function LogSheetCanvas({ dailyLog, dateStr = '' }) {
     ctx.fillText('Enter name of place you reported and where released from work and when and where each change of duty occurred.', PAD, rmY + 27);
     ctx.fillText('Use time standard of home terminal.', PAD, rmY + 37);
 
-    // Remarks box (left ~60% width)
+    const remarks = dailyLog.remarks || [];
     const rmBoxW = 580;
+    const remarkLineH = 16;
+    const remarkPadTop = 16;
+    const maxVisibleRemarks = 10;
+    const visibleRemarks = remarks.slice(0, maxVisibleRemarks);
+    const overflowed = remarks.length > maxVisibleRemarks;
+    const rmBoxH = Math.max(80, visibleRemarks.length * remarkLineH + remarkPadTop + 10);
+
     ctx.strokeStyle = '#555';
     ctx.lineWidth = 0.7;
-    ctx.strokeRect(PAD, rmY + 44, rmBoxW, 118);
+    ctx.strokeRect(PAD, rmY + 44, rmBoxW, rmBoxH);
 
     ctx.font = '9.5px Arial, sans-serif';
     ctx.fillStyle = '#000';
-    const remarks = dailyLog.remarks || [];
-    remarks.forEach((rem, idx) => {
-      if (idx < 6) {
-        ctx.fillText(`${rem.time}  ${rem.location}  —  ${rem.description}`, PAD + 6, rmY + 60 + idx * 17);
-      }
+    visibleRemarks.forEach((rem, idx) => {
+      ctx.fillText(`${rem.time}  ${rem.location}  —  ${rem.description}`, PAD + 6, rmY + 44 + remarkPadTop + idx * remarkLineH);
     });
+    if (overflowed) {
+      ctx.font = 'italic 8.5px Arial, sans-serif';
+      ctx.fillStyle = '#666';
+      ctx.fillText(`... ${remarks.length - maxVisibleRemarks} more entries (see subsequent log sheets)`, PAD + 6, rmY + 44 + remarkPadTop + maxVisibleRemarks * remarkLineH);
+    }
 
-    // Shipping Documents
-    const sdY = rmY + 170;
+    // Shipping Documents — position shifts with dynamic rmBoxH
+    const sdY = rmY + 44 + rmBoxH + 12;
     ctx.font = 'bold 10px Arial, sans-serif';
     ctx.fillStyle = '#000';
     ctx.fillText('Shipping Documents:', PAD, sdY);

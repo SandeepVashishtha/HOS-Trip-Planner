@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
-import { MapPin, Navigation, Package, Play, Clock, Sparkles, Search, X } from 'lucide-react';
+import { MapPin, ArrowLeftRight, Clock, Search, Sparkles, Navigation, CheckCircle2 } from 'lucide-react';
 
-// ── Debounce hook ──────────────────────────────────────────────────────────────
+// ── Debounce ────────────────────────────────────────────────────────────────────
 function useDebounce(value, delay) {
   const [debounced, setDebounced] = useState(value);
   useEffect(() => {
@@ -12,8 +12,7 @@ function useDebounce(value, delay) {
   return debounced;
 }
 
-// ── Portal Dropdown ────────────────────────────────────────────────────────────
-// Renders the dropdown into document.body so it is never clipped by overflow:hidden
+// ── Dropdown Portal ──────────────────────────────────────────────────────────────
 function DropdownPortal({ anchorRef, open, suggestions, highlightedIdx, onSelect, onHover }) {
   const [rect, setRect] = useState(null);
 
@@ -41,12 +40,12 @@ function DropdownPortal({ anchorRef, open, suggestions, highlightedIdx, onSelect
       left: rect.left,
       width: rect.width,
       zIndex: 99999,
-      background: '#FFFFFF',
-      border: '1.5px solid #E2E8F0',
-      borderRadius: 10,
-      boxShadow: '0 16px 40px rgba(15,23,42,0.15)',
+      background: '#fff',
+      border: '1px solid var(--border)',
+      borderRadius: '12px',
+      boxShadow: '0 10px 25px rgba(0,0,0,0.12)',
       overflow: 'hidden',
-      maxHeight: 280,
+      maxHeight: 250,
       overflowY: 'auto',
     }}>
       {suggestions.map((s, idx) => (
@@ -58,30 +57,19 @@ function DropdownPortal({ anchorRef, open, suggestions, highlightedIdx, onSelect
             padding: '10px 14px',
             cursor: 'pointer',
             display: 'flex',
-            alignItems: 'flex-start',
+            alignItems: 'center',
             gap: 10,
-            background: highlightedIdx === idx ? '#EFF6FF' : '#FFFFFF',
-            borderBottom: idx < suggestions.length - 1 ? '1px solid #F1F5F9' : 'none',
-            transition: 'background 0.1s',
+            background: highlightedIdx === idx ? 'var(--bg-hover)' : '#fff',
+            borderBottom: idx < suggestions.length - 1 ? '1px solid var(--border)' : 'none',
           }}
         >
-          <MapPin style={{
-            width: 14, height: 14, marginTop: 2, flexShrink: 0,
-            color: highlightedIdx === idx ? '#0284C7' : '#94A3B8',
-          }} />
+          <MapPin size={14} style={{ flexShrink: 0, color: 'var(--accent-blue)' }} />
           <div>
-            <div style={{
-              fontSize: '0.88rem', fontWeight: 600,
-              color: highlightedIdx === idx ? '#0F172A' : '#334155',
-            }}>
+            <div style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--ink)' }}>
               {s.city}{s.state ? `, ${s.state}` : ''}
             </div>
             {s.extra && (
-              <div style={{
-                fontSize: '0.74rem', color: '#94A3B8', marginTop: 1,
-                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                maxWidth: rect.width - 50,
-              }}>
+              <div style={{ fontSize: '0.74rem', color: 'var(--ink-3)', marginTop: 1 }}>
                 {s.extra}
               </div>
             )}
@@ -93,59 +81,54 @@ function DropdownPortal({ anchorRef, open, suggestions, highlightedIdx, onSelect
   );
 }
 
-// ── LocationInput ──────────────────────────────────────────────────────────────
-function LocationInput({ value, onChange, placeholder, icon: Icon, iconColor, label, id }) {
+// ── LocationInput Box (Card Style) ──────────────────────────────────────────────
+function LocationInputBox({
+  value,
+  onChange,
+  label,
+  placeholder,
+  icon: Icon = MapPin,
+  iconColor = '#2563eb',
+  id,
+}) {
   const [query, setQuery] = useState(value);
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [highlightedIdx, setHighlightedIdx] = useState(-1);
-  const [skipFetch, setSkipFetch] = useState(false);
   const wrapperRef = useRef(null);
   const inputRef = useRef(null);
 
   const debouncedQuery = useDebounce(query, 350);
 
-  // Sync external value into query when preset is clicked
   useEffect(() => {
     setQuery(value);
-    setSuggestions([]);
-    setOpen(false);
   }, [value]);
 
-  // Fetch from Photon (Komoot) — better CORS, free, no key
   useEffect(() => {
-    if (skipFetch) { setSkipFetch(false); return; }
     const q = debouncedQuery.trim();
-    if (q.length < 2) { setSuggestions([]); setOpen(false); return; }
-
+    if (q.length < 2 || q === value) {
+      setSuggestions([]);
+      return;
+    }
     let cancelled = false;
     setLoading(true);
-
-    fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=7&lang=en&layer=city&layer=state&bbox=-125,24,-66,49`)
+    fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=6&lang=en&layer=city&layer=state&bbox=-125,24,-66,49`)
       .then(r => r.json())
       .then(data => {
         if (cancelled) return;
-        const features = data.features || [];
-        const results = features
+        const results = (data.features || [])
           .filter(f => f.properties)
           .map(f => {
             const p = f.properties;
-            const city  = p.city || p.name || '';
+            const city = p.city || p.name || '';
             const state = p.state || '';
-            const country = p.country || '';
-            const extra = [p.county, country].filter(Boolean).join(', ');
+            const extra = [p.county, p.country].filter(Boolean).join(', ');
             return { city, state, extra, display: `${city}${state ? ', ' + state : ''}` };
           })
           .filter(f => f.city);
-
-        // Deduplicate by display string
         const seen = new Set();
-        const unique = results.filter(r => {
-          if (seen.has(r.display)) return false;
-          seen.add(r.display); return true;
-        });
-
+        const unique = results.filter(r => { if (seen.has(r.display)) return false; seen.add(r.display); return true; });
         setSuggestions(unique);
         setOpen(unique.length > 0);
         setHighlightedIdx(-1);
@@ -154,30 +137,23 @@ function LocationInput({ value, onChange, placeholder, icon: Icon, iconColor, la
       .catch(() => {
         if (!cancelled) { setSuggestions([]); setLoading(false); }
       });
-
     return () => { cancelled = true; };
-  }, [debouncedQuery]);
+  }, [debouncedQuery, value]);
 
-  // Close on outside click
   useEffect(() => {
     const handler = (e) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
-        setOpen(false);
-      }
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) setOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
   const selectSuggestion = (s) => {
-    const val = s.display;
-    setSkipFetch(true);
-    setQuery(val);
-    onChange(val);
+    setQuery(s.display);
+    onChange(s.display);
     setSuggestions([]);
     setOpen(false);
     setHighlightedIdx(-1);
-    inputRef.current?.blur();
   };
 
   const handleKeyDown = (e) => {
@@ -196,28 +172,24 @@ function LocationInput({ value, onChange, placeholder, icon: Icon, iconColor, la
     }
   };
 
-  const clear = () => {
-    setQuery('');
-    onChange('');
-    setSuggestions([]);
-    setOpen(false);
-    inputRef.current?.focus();
-  };
-
   return (
-    <div className="form-group" ref={wrapperRef}>
-      <label className="form-label" htmlFor={id}>
-        <Icon style={{ width: 14, height: 14, color: iconColor, marginRight: 4 }} />
-        {label}
-      </label>
-      <div style={{ position: 'relative' }}>
+    <div
+      ref={wrapperRef}
+      className="search-field-box"
+      onClick={() => inputRef.current?.focus()}
+    >
+      <div className="search-field-icon" style={{ color: iconColor }}>
+        <Icon size={18} />
+      </div>
+      <div className="search-field-content">
+        <label htmlFor={id} className="search-field-label">{label}</label>
         <input
           id={id}
           ref={inputRef}
           type="text"
-          className="form-input"
+          className="search-field-input"
           value={query}
-          onChange={(e) => {
+          onChange={e => {
             setQuery(e.target.value);
             onChange(e.target.value);
           }}
@@ -226,24 +198,11 @@ function LocationInput({ value, onChange, placeholder, icon: Icon, iconColor, la
           placeholder={placeholder}
           autoComplete="off"
           required
-          style={{ paddingRight: 36 }}
         />
-        <div style={{
-          position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
-          display: 'flex', alignItems: 'center', pointerEvents: query ? 'auto' : 'none',
-        }}>
-          {loading
-            ? <div style={{
-                width: 14, height: 14,
-                border: '2px solid #CBD5E1', borderTopColor: '#0284C7',
-                borderRadius: '50%', animation: 'spin 0.6s linear infinite',
-              }} />
-            : query
-              ? <X style={{ width: 15, height: 15, cursor: 'pointer', color: '#94A3B8' }} onClick={clear} />
-              : <Search style={{ width: 14, height: 14, color: '#CBD5E1' }} />
-          }
-        </div>
       </div>
+      {loading && (
+        <div style={{ width: 14, height: 14, border: '2px solid #e2e8f0', borderTopColor: 'var(--accent-blue)', borderRadius: '50%', animation: 'spin 0.6s linear infinite', marginRight: 4 }} />
+      )}
 
       <DropdownPortal
         anchorRef={wrapperRef}
@@ -257,12 +216,16 @@ function LocationInput({ value, onChange, placeholder, icon: Icon, iconColor, la
   );
 }
 
-// ── TripForm ───────────────────────────────────────────────────────────────────
-export default function TripForm({ onSubmit, loading }) {
-  const [currentLocation, setCurrentLocation] = useState('Chicago, IL');
-  const [pickupLocation, setPickupLocation] = useState('Indianapolis, IN');
-  const [dropoffLocation, setDropoffLocation] = useState('Dallas, TX');
-  const [currentCycleUsed, setCurrentCycleUsed] = useState(15.0);
+// ── TripForm Component ──────────────────────────────────────────────────────────
+export default function TripForm({
+  initialValues = {},
+  onSubmit,
+  loading = false,
+}) {
+  const [currentLocation, setCurrentLocation] = useState(initialValues.current_location || 'Chicago, IL');
+  const [pickupLocation, setPickupLocation] = useState(initialValues.pickup_location || 'Indianapolis, IN');
+  const [dropoffLocation, setDropoffLocation] = useState(initialValues.dropoff_location || 'Dallas, TX');
+  const [currentCycleUsed, setCurrentCycleUsed] = useState(initialValues.current_cycle_used ?? 15.0);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -274,6 +237,12 @@ export default function TripForm({ onSubmit, loading }) {
     });
   };
 
+  const swapLocations = () => {
+    const temp = currentLocation;
+    setCurrentLocation(pickupLocation);
+    setPickupLocation(temp);
+  };
+
   const applyPreset = (curr, pick, drop, cycle) => {
     setCurrentLocation(curr);
     setPickupLocation(pick);
@@ -281,106 +250,180 @@ export default function TripForm({ onSubmit, loading }) {
     setCurrentCycleUsed(cycle);
   };
 
+  const cycleRemaining = Math.max(0, 70 - currentCycleUsed);
+  const cyclePercent = (currentCycleUsed / 70) * 100;
+
   return (
-    <div className="glass-card" style={{ padding: 24 }}>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-main)' }}>
-          Trip Parameters
-        </h2>
-        <span style={{ fontSize: '0.8rem', color: '#0284C7', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
-          <Sparkles style={{ width: 14, height: 14 }} /> HOS Engine Active
-        </span>
-      </div>
-
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-
-        <LocationInput
-          id="current-location"
-          label="Current Location"
-          placeholder="e.g. Chicago, IL"
-          icon={MapPin}
-          iconColor="#0284C7"
-          value={currentLocation}
-          onChange={setCurrentLocation}
-        />
-
-        <LocationInput
-          id="pickup-location"
-          label="Pickup Location"
-          placeholder="e.g. Indianapolis, IN"
-          icon={Package}
-          iconColor="#10B981"
-          value={pickupLocation}
-          onChange={setPickupLocation}
-        />
-
-        <LocationInput
-          id="dropoff-location"
-          label="Dropoff Location"
-          placeholder="e.g. Dallas, TX"
-          icon={Navigation}
-          iconColor="#EF4444"
-          value={dropoffLocation}
-          onChange={setDropoffLocation}
-        />
-
-        {/* Cycle slider */}
-        <div className="form-group">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <label className="form-label">
-              <Clock style={{ width: 14, height: 14, color: '#D97706', marginRight: 4 }} />
-              Current Cycle Hours Used (70h/8d)
-            </label>
-            <span style={{
-              fontFamily: 'var(--font-mono)', fontSize: '0.95rem', color: '#D97706',
-              fontWeight: 700, background: '#FEF3C7', padding: '2px 8px', borderRadius: 6,
-            }}>
-              {currentCycleUsed} hrs
-            </span>
+    <div className="trip-widget-container">
+      <form onSubmit={handleSubmit} className="trip-search-card">
+        
+        {/* Main Input Row (From, Swap, Pickup, Dropoff) */}
+        <div className="trip-fields-row">
+          
+          {/* Current Location (From) */}
+          <div style={{ flex: '1 1 200px', position: 'relative' }}>
+            <LocationInputBox
+              id="current-location"
+              label="From (Current Location)"
+              placeholder="e.g. Chicago, IL"
+              value={currentLocation}
+              onChange={setCurrentLocation}
+              icon={Navigation}
+              iconColor="#111827"
+            />
           </div>
-          <input
-            type="range" min="0" max="70" step="0.5" value={currentCycleUsed}
-            onChange={(e) => setCurrentCycleUsed(e.target.value)}
-            style={{ accentColor: '#0284C7', cursor: 'pointer', marginTop: 6, width: '100%' }}
-          />
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: 2 }}>
-            <span>0 hrs</span>
-            <span style={{ color: '#D97706' }}>{70 - currentCycleUsed} hrs remaining</span>
-            <span>70 hrs</span>
+
+          {/* Swap Button */}
+          <button
+            type="button"
+            className="swap-btn"
+            onClick={swapLocations}
+            title="Swap Current & Pickup Location"
+          >
+            <ArrowLeftRight size={15} />
+          </button>
+
+          {/* Pickup Location */}
+          <div style={{ flex: '1 1 200px' }}>
+            <LocationInputBox
+              id="pickup-location"
+              label="Pickup Location"
+              placeholder="e.g. Indianapolis, IN"
+              value={pickupLocation}
+              onChange={setPickupLocation}
+              icon={MapPin}
+              iconColor="#2563eb"
+            />
           </div>
+
+          {/* Dropoff Location */}
+          <div style={{ flex: '1 1 200px' }}>
+            <LocationInputBox
+              id="dropoff-location"
+              label="Dropoff Location"
+              placeholder="e.g. Dallas, TX"
+              value={dropoffLocation}
+              onChange={setDropoffLocation}
+              icon={MapPin}
+              iconColor="#dc2626"
+            />
+          </div>
+
         </div>
 
-        {/* Quick Presets */}
-        <div>
-          <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.05em' }}>
-            Quick Presets:
-          </span>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+        {/* Secondary Row: Cycle Hours + CTA Button */}
+        <div className="trip-secondary-row">
+          
+          {/* Cycle Hours Slider Box */}
+          <div className="cycle-selector-box">
+            <div className="cycle-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Clock size={15} style={{ color: '#d97706' }} />
+                <span className="search-field-label" style={{ margin: 0 }}>Current Cycle Used (70h / 8-Day)</span>
+              </div>
+              <span className="cycle-val-display">
+                <strong>{currentCycleUsed}h</strong> <span style={{ color: 'var(--ink-3)', fontWeight: 400 }}>/ 70h</span>
+              </span>
+            </div>
+
+            <div style={{ marginTop: 8 }}>
+              <div className="cycle-track">
+                <div
+                  className="cycle-fill"
+                  style={{
+                    width: `${cyclePercent}%`,
+                    background: cyclePercent > 85 ? '#dc2626' : cyclePercent > 60 ? '#d97706' : '#2563eb',
+                  }}
+                />
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="70"
+                step="0.5"
+                value={currentCycleUsed}
+                onChange={e => setCurrentCycleUsed(parseFloat(e.target.value) || 0)}
+                className="cycle-slider"
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--ink-3)', marginTop: 2 }}>
+                <span>0 hrs</span>
+                <span style={{ fontWeight: 600, color: cycleRemaining < 10 ? '#dc2626' : 'var(--ink-2)' }}>
+                  {cycleRemaining.toFixed(1)} hrs remaining
+                </span>
+                <span>70 hrs max</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Calculate Route & Generate Logs CTA Button */}
+          <button
+            type="submit"
+            className="search-cta-btn"
+            disabled={loading}
+          >
+            {loading ? (
+              <span className="pulse-loader">Planning Trip…</span>
+            ) : (
+              <>
+                <Search size={18} />
+                <span>Calculate Route &amp; ELD Logs</span>
+              </>
+            )}
+          </button>
+
+        </div>
+
+        {/* Quick Route Presets Bar */}
+        <div className="presets-bar">
+          <div className="presets-title">
+            <Sparkles size={13} style={{ color: 'var(--accent-blue)' }} />
+            <span>Sample Trips:</span>
+          </div>
+          <div className="presets-list">
             {[
-              ['Chicago, IL', 'Indianapolis, IN', 'Dallas, TX', 15, 'Chicago → Indy → Dallas'],
-              ['New York, NY', 'Atlanta, GA', 'Miami, FL', 25, 'NY → Atlanta → Miami'],
-              ['Los Angeles, CA', 'Denver, CO', 'Seattle, WA', 65, 'LA → Denver → Seattle'],
-            ].map(([c, p, d, hr, label]) => (
-              <button key={label} type="button" className="btn-preset"
-                onClick={() => applyPreset(c, p, d, hr)}>
-                {label}
+              { curr: 'Chicago, IL', pick: 'Indianapolis, IN', drop: 'Dallas, TX', cycle: 15, name: 'Chicago → Indy → Dallas (980 mi)' },
+              { curr: 'New York, NY', pick: 'Atlanta, GA', drop: 'Miami, FL', cycle: 25, name: 'New York → Atlanta → Miami (1,340 mi)' },
+              { curr: 'Los Angeles, CA', pick: 'Denver, CO', drop: 'Seattle, WA', cycle: 45, name: 'LA → Denver → Seattle (2,350 mi)' },
+            ].map((p, i) => (
+              <button
+                key={i}
+                type="button"
+                className="preset-chip"
+                onClick={() => applyPreset(p.curr, p.pick, p.drop, p.cycle)}
+              >
+                {p.name}
               </button>
             ))}
           </div>
         </div>
 
-        <button
-          type="submit" className="btn-primary" disabled={loading}
-          style={{ width: '100%', justifyContent: 'center', marginTop: 8, padding: '14px 24px' }}
-        >
-          {loading
-            ? <span className="pulse-loader">Calculating Route & HOS Logs...</span>
-            : <><Play style={{ width: 18, height: 18 }} /> Calculate Route &amp; Generate ELD Logs</>
-          }
-        </button>
       </form>
+
+      {/* Feature cards below the search widget */}
+      <div className="feature-cards-grid">
+        <div className="feature-card">
+          <CheckCircle2 size={16} className="feature-icon" />
+          <div>
+            <div className="feature-title">FMCSA HOS Compliant</div>
+            <div className="feature-desc">70-hour / 8-day cycle, 11h driving &amp; 14h duty window logic</div>
+          </div>
+        </div>
+        <div className="feature-card">
+          <CheckCircle2 size={16} className="feature-icon" />
+          <div>
+            <div className="feature-title">Smart Mandatory Stops</div>
+            <div className="feature-desc">30-min rest breaks every 8h &amp; 10-hr sleeper berths</div>
+          </div>
+        </div>
+        <div className="feature-card">
+          <CheckCircle2 size={16} className="feature-icon" />
+          <div>
+            <div className="feature-title">Official Daily Log Sheets</div>
+            <div className="feature-desc">Generated 24-hour graph grid RODS sheets &amp; PDF export</div>
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 }
